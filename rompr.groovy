@@ -1,24 +1,11 @@
-﻿/**
- *  tplink-hs-100
- *
- *  Copyright 2016 Dan Logan
- *
- *  Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
- *  in compliance with the License. You may obtain a copy of the License at:
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- *  Unless required by applicable law or agreed to in writing, software distributed under the License is distributed
- *  on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License
- *  for the specific language governing permissions and limitations under the License.
- *
- */
- 
+﻿import groovy.json.JsonSlurper
+import groovy.json.JsonOutput
+
 metadata {
-	definition (name: "tplink-hs-100", namespace: "danlogan9", author: "Dan Logan") {
+	definition (name: "Rompr", namespace: "ngw", author: "Niv Gal Waizer") {
+    	capability "Music Player"
 		capability "Switch"
         capability "Refresh"
-        capability "Polling"
 	}
 
 	simulator {
@@ -26,118 +13,217 @@ metadata {
 	}
 
 	tiles {
-        standardTile("switch", "device.switch", width: 2, height: 2, canChangeIcon: true) {
-            state "off", label: 'Off', action: "switch.on",
-                  icon: "st.switches.switch.off", backgroundColor: "#ffffff"
-            state "on", label: 'On', action: "switch.off",
-                  icon: "st.switches.switch.on", backgroundColor: "#79b821"
+        standardTile("switch", "device.switch", width: 1, height: 1, canChangeIcon: true) {
+            state "off", label: 'Off', action: "switch.on", icon: "st.switches.switch.off", backgroundColor: "#ffffff"
+            state "on", label: 'On', action: "switch.off", icon: "st.switches.switch.on", backgroundColor: "#79b821"
         }
-        
-    	standardTile("refresh", "capability.refresh", width: 1, height: 1,  decoration: "flat") {
-      		state ("default", label:"Refresh", action:"refresh.refresh", icon:"st.secondary.refresh")
-    	}         
-        
-        main("switch")
-        details(["switch"])
-	}
-    
-    command "on"
-    command "off"
+		// Row 1
+        standardTile("nextTrack", "device.status", width: 1, height: 1, decoration: "flat") {
+      		state "next", label:'', action:"music Player.nextTrack", icon:"st.sonos.next-btn", backgroundColor:"#ffffff"
+		}
+		standardTile("playpause", "device.status", width: 1, height: 1, decoration: "flat") {
+			state "default", label:'', action:"music Player.play", icon:"st.sonos.play-btn", nextState:"play", backgroundColor:"#ffffff"
+			state "play", label:'', action:"music Player.pause", icon:"st.sonos.pause-btn", nextState:"pause", backgroundColor:"#ffffff"
+            state "pause", label:'', action:"music Player.play", icon:"st.sonos.play-btn", nextState:"play", backgroundColor:"#ffffff"
+		}
+        standardTile("previousTrack", "device.status", width: 1, height: 1, decoration: "flat") {
+      		state "previous", label:'', action:"music Player.previousTrack", icon:"st.sonos.previous-btn", backgroundColor:"#ffffff"
+		}
+		// Row 2
+        standardTile("status", "device.status", width: 1, height: 1, decoration: "flat", canChangeIcon: true) {
+      		state "play", label:'Playing', action:"music Player.pause", icon:"st.Electronics.electronics19", nextState:"pause", backgroundColor:"#ffffff"
+      		state "stop", label:'Stopped', action:"music Player.play", icon:"st.Electronics.electronics19", nextState:"play", backgroundColor:"#ffffff"
+      		state "pause", label:'Paused', action:"music Player.play", icon:"st.Electronics.electronics19", nextState:"play", backgroundColor:"#ffffff"
+		}
 
+		standardTile("refresh", "capability.refresh", width: 1, height: 1,  decoration: "flat") {
+      		state ("default", label:"Refresh", action:"refresh.refresh", icon:"st.secondary.refresh")
+    	}
+		// Row 3
+		standardTile("mute", "device.mute", inactiveLabel: false, decoration: "flat") {
+			state "unmuted", label:"Mute", action:"music Player.mute", icon:"st.custom.sonos.unmuted", backgroundColor:"#ffffff", nextState:"muted"
+			state "muted", label:"Unmute", action:"music Player.unmute", icon:"st.custom.sonos.muted", backgroundColor:"#ffffff", nextState:"unmuted"
+		}
+		controlTile("volume", "device.volume", "slider", height: 1, width: 3, range:"(0..100)") {
+			state "volume", label: "Volume", action:"music Player.setLevel", backgroundColor:"#ffffff"
+		}
+
+        
+        main("status")
+        details([
+        "previousTrack","playpause","nextTrack",
+        "status", "refresh",
+        "mute", "volume"
+        ])
+	}
 }
 
 preferences {
-  input("outletIP", "text", title: "Outlet IP", required: true, displayDuringSetup: true)
-  input("gatewayIP", "text", title: "Gateway IP", required: true, displayDuringSetup: true)
-  input("gatewayPort", "text", title: "Gateway Port", required: true, displayDuringSetup: true)
+  input("IP", "text", title: "IP", defaultValue:"192.168.1.12", required: false, displayDuringSetup: true)
+  input("Port", "text", title: "Port", defaultValue:"80", required: false, displayDuringSetup: true)
 }
 
 def message(msg){
-  log.debug(msg)
+  log.debug("***** '${msg}'")
 }
 
 // parse events into attributes
 def parse(String description) {
-	//message("Parsing '${description}'")
-    log.debug "parsing"
-    def msg = parseLanMessage(description)
-
-    def headersAsString = msg.header // => headers as a string
-    def headerMap = msg.headers      // => headers as a Map
-    def body = msg.body              // => request body as a string
-    def status = msg.status          // => http status code of the response
-    def json = msg.json              // => any JSON included in response body, as a data structure of lists and maps
-    def xml = msg.xml                // => any XML included in response body, as a document tree structure
-    def data = msg.data              // => either JSON or XML in response body (whichever is specified by content-type header in response)	
-    //message(msg.body)
-    //message(headerAsString)
- 
-    //status = headerMap["x-hs100-status"] ?: ""
-    //message("switch status: '${status}'")
-    //if (status != "") {
-    //  sendEvent(name: "switch", value: status, isStateChange: true)
-    //}
-    
-    //def uuid = UUID.randomUUID().toString()
-    //device.deviceNetworkId = "tp_link_${uuid}"    
+  log.debug("Parsing '${description}'")
+  def map = stringToMap(description)
+  if (map.headers && map.body) { //got device info response
+    if (map.body) {
+      def bodyString = new String(map.body.decodeBase64())
+      log.debug( "body = $bodyString")
+      def slurper = new JsonSlurper()
+      def result = slurper.parseText(bodyString)
+      if (result.containsKey("volume")) {
+        log.debug( "setting volume to ${result.volume}")
+        sendEvent(name: "volume", value: result.volume)
+      }
+      if (result.containsKey("state")) {
+        log.debug( "setting state to ${result.state}")
+        sendEvent(name: "status", value: result.state)
+        sendEvent(name: "playpause", value: result.state)
+      }
+      if (result.containsKey("file")) {
+        def json = new groovy.json.JsonBuilder(result.file)
+        log.debug "setting file to ${json.toString()}"
+      //  sendEvent(name: "file", value: json.toString())
+      }
+      if (result.containsKey("playlist")) {
+        def json = new groovy.json.JsonBuilder(result.playlist)
+        log.debug "setting playlist to ${json.toString()}"
+      //  sendEvent(name: "playlist",value: json.toString())
+      }
+    }
+  }
 }
 
 def refresh(){
-  executeCommand("status")
+  executeCommand("[]")
 }
 
 // handle commands
 def on() {
-	message("Executing 'on'")
-	executeCommand("on")
-    sendEvent(name: "switch", value: "on", isStateChange: true)
+	message('on')
+	play()
 }
 
 def off() {
-  	message("Executing 'off'")
-	executeCommand("off")
-    sendEvent(name: "switch", value: "off", isStateChange: true)
+  	message('off')
+	stop()
 }
 
-def hubActionResponse(response){
-  message("Executing 'hubActionResponse': '${device.deviceNetworkId}'")
-  //message(response)
-  
-  def status = response.headers["x-hs100-status"] ?: ""
-  message("switch status: '${status}'")
-  if (status != "") {
-      sendEvent(name: "switch", value: status, isStateChange: true)
-  }
+def play() {
+	message("play")
+    //sendEvent(name: "playpause", value: "play")
+    //sendEvent(name: "switch", value: "on", isStateChange: true)
+    executeCommand("[[\"play\"]]")
+}
 
+def pause() {
+	message( "pause" )
+	//sendEvent(name: "playpause", value: "pause")
+	executeCommand("[[\"pause\"]]")}
+
+def stop() {
+	message("stop")
+    sendEvent(name: "switch", value: "off", isStateChange: true)
+    sendEvent(name: "status", value: "stop", isStateChange: true)
+	executeCommand("[[\"stop\"]]")
+}
+
+def previousTrack() {
+  message('previousTrack')
+  executeCommand("[[\"play\",\"-1\"]]")
+}
+
+def nextTrack() {
+	message('nextTrack')
+	executeCommand("[[\"play\",\"1\"]]")
+}
+
+def setLevel(value) {
+  message("setLevel to '${value}'")
+  sendEvent(name: "level", value: value)
+  executeCommand("[[\"setvol\",${value}]]")
+
+}
+
+def mute() {
+  message('mute')
+  executeCommand("[[\"disableoutput\",0]]")
+}
+
+def unmute() {
+  message('unmute')
+  executeCommand("[[\"enableoutput\",0]]")
+}
+
+
+def hubActionResponse(response){
+  message("**** Niv hubActionResponse: '${response}'")
+  message(response)
 }
 
 def poll(){
-  executeCommand("status")
+  refresh()
+}
+def createDNI(){
+	if (!settings.IP && !settings.Port) {
+    	settings.IP = "192.168.1.12"
+    	settings.Port = "80"
+    }	
+    def gatewayIPHex = convertIPtoHex(settings.IP)
+    def gatewayPortHex = convertPortToHex(settings.Port)
+    device.deviceNetworkId = "$gatewayIPHex:$gatewayPortHex"
+    message (device.deviceNetworkId)
+}
+
+private get(path){
+    message ("**** Issue GET to: ${settings.IP}:${settings.Port}")
+    createDNI()
+	def headers = [:] 
+    headers.put("HOST", "${settings.IP}:${settings.Port}")
+    try {
+      def hubAction = new physicalgraph.device.HubAction([
+          method: "GET",
+          path: path,
+          headers: headers
+          ], 
+          device.deviceNetworkId //, 
+          //[callback: "hubActionResponse"]
+      )
+      message("${hubAction}")
+      hubAction
+    } catch (e) {
+      message(e.message)
+    }
 }
 
 private executeCommand(command){
-
-    def gatewayIPHex = convertIPtoHex(gatewayIP)
-    def gatewayPortHex = convertPortToHex(gatewayPort)
-    //device.deviceNetworkId = "$gatewayIPHex:$gatewayPortHex"
-    message (device.deviceNetworkId)
-    message ("gateway port: $gatewayIP:$gatewayPort")
-    
+    message ("**** POSTing to: ${settings.IP}:${settings.Port} $command")
+    createDNI()
+	def path = "/player/mpd/postcommand.php"
     def headers = [:] 
-    headers.put("HOST", "$gatewayIP:$gatewayPort")    
-    headers.put("x-hs100-ip", outletIP)
-    headers.put("x-hs100-command", command)
-  
-    //message("x-hs100-ip: '$outletIP'")    
-    //message("executeCommand: '${command}'")
+    headers.put("HOST", "${settings.IP}:${settings.Port}")
+    headers.put("Accept", "application/json, text/javascript, */*; q=0.01")
+    def paylaod = 'play'
+    def json = JsonOutput.toJson(["${payload}"])
+    message("${json}")
     try {
-      sendHubCommand(new physicalgraph.device.HubAction([
-          method: "GET",
-          path: "/",
-          headers: headers], 
-          device.deviceNetworkId, 
-          [callback: "hubActionResponse"]
-      )) 
+      def hubAction = new physicalgraph.device.HubAction([
+          method: "POST",
+          path: path,
+          headers: headers,
+          body: "${command}"
+          ],
+          device.deviceNetworkId //,
+          //[callback: "hubActionResponse"]
+      )
+      message("${hubAction}")
+      hubAction
     } catch (e) {
       message(e.message)
     }
