@@ -44,14 +44,17 @@ metadata {
 			state "unmuted", label:"Mute", action:"music Player.mute", icon:"st.custom.sonos.unmuted", backgroundColor:"#ffffff", nextState:"muted"
 			state "muted", label:"Unmute", action:"music Player.unmute", icon:"st.custom.sonos.muted", backgroundColor:"#ffffff", nextState:"unmuted"
 		}
-		controlTile("volume", "device.volume", "slider", height: 1, width: 3, inactiveLabel: false) {
-			state "volume", label: '${currentValue}', action:"music Player.setLevel", backgroundColor:"#ffffff"
+		controlTile("volume", "device.volume", "slider", width: 3, height: 1) {
+			state "volume", label:'${currentValue}', action:"music Player.setLevel", backgroundColor:"#ffffff"
 		}
-
+		valueTile("file", "device.status", width: 3, height: 1, decoration: "flat") {
+        	state ("name", label:'${currentValue}')
+        }
         
         main("status")
         details([
         "previousTrack","playpause","nextTrack",
+        "file",
         "status", "refresh",
         "mute", "volume"
         ])
@@ -87,9 +90,8 @@ def parse(String description) {
         sendEvent(name: "playpause", value: result.state)
       }
       if (result.containsKey("file")) {
-        def json = new groovy.json.JsonBuilder(result.file)
-        log.debug "setting file to ${json.toString()}"
-      //  sendEvent(name: "file", value: json.toString())
+      	message("setting file to ${result.file}")
+        sendEvent(name: "file", value: result.file)
       }
       if (result.containsKey("playlist")) {
         def json = new groovy.json.JsonBuilder(result.playlist)
@@ -147,7 +149,7 @@ def nextTrack() {
 
 def setLevel(value) {
   message("setLevel to '${value}'")
-  //sendEvent(name: "volume", value: value, isStateChange: true)
+  sendEvent(name: "volume", value: value, isStateChange: true)
   executeCommand("[[\"setvol\",${value}]]")
 }
 
