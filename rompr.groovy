@@ -14,8 +14,8 @@ metadata {
 
 	tiles {
         standardTile("switch", "device.switch", width: 1, height: 1, canChangeIcon: true) {
-            state "off", label: 'Off', action: "switch.on", icon: "st.switches.switch.off", backgroundColor: "#ffffff"
-            state "on", label: 'On', action: "switch.off", icon: "st.switches.switch.on", backgroundColor: "#79b821"
+            state "off", label: '${currentValue}', action: "switch.on", icon: "st.switches.switch.off", backgroundColor: "#ffffff"
+            state "on", label: '${currentValue}', action: "switch.off", icon: "st.switches.switch.on", backgroundColor: "#79b821"
         }
 		// Row 1
         standardTile("nextTrack", "device.status", width: 1, height: 1, decoration: "flat") {
@@ -44,8 +44,8 @@ metadata {
 			state "unmuted", label:"Mute", action:"music Player.mute", icon:"st.custom.sonos.unmuted", backgroundColor:"#ffffff", nextState:"muted"
 			state "muted", label:"Unmute", action:"music Player.unmute", icon:"st.custom.sonos.muted", backgroundColor:"#ffffff", nextState:"unmuted"
 		}
-		controlTile("volume", "device.volume", "slider", height: 1, width: 3, range:"(0..100)") {
-			state "volume", label: "Volume", action:"music Player.setLevel", backgroundColor:"#ffffff"
+		controlTile("volume", "device.volume", "slider", height: 1, width: 3, inactiveLabel: false) {
+			state "volume", label: '${currentValue}', action:"music Player.setLevel", backgroundColor:"#ffffff"
 		}
 
         
@@ -69,20 +69,20 @@ def message(msg){
 
 // parse events into attributes
 def parse(String description) {
-  log.debug("Parsing '${description}'")
+  message("Parsing '${description}'")
   def map = stringToMap(description)
   if (map.headers && map.body) { //got device info response
     if (map.body) {
       def bodyString = new String(map.body.decodeBase64())
-      log.debug( "body = $bodyString")
+      message("body = $bodyString")
       def slurper = new JsonSlurper()
       def result = slurper.parseText(bodyString)
       if (result.containsKey("volume")) {
-        log.debug( "setting volume to ${result.volume}")
+        message("setting volume to ${result.volume}")
         sendEvent(name: "volume", value: result.volume)
       }
       if (result.containsKey("state")) {
-        log.debug( "setting state to ${result.state}")
+        message("setting state to ${result.state}")
         sendEvent(name: "status", value: result.state)
         sendEvent(name: "playpause", value: result.state)
       }
@@ -125,7 +125,8 @@ def play() {
 def pause() {
 	message( "pause" )
 	//sendEvent(name: "playpause", value: "pause")
-	executeCommand("[[\"pause\"]]")}
+	executeCommand("[[\"pause\"]]")
+}
 
 def stop() {
 	message("stop")
@@ -146,9 +147,8 @@ def nextTrack() {
 
 def setLevel(value) {
   message("setLevel to '${value}'")
-  sendEvent(name: "level", value: value)
+  //sendEvent(name: "volume", value: value, isStateChange: true)
   executeCommand("[[\"setvol\",${value}]]")
-
 }
 
 def mute() {
@@ -209,9 +209,8 @@ private executeCommand(command){
     def headers = [:] 
     headers.put("HOST", "${settings.IP}:${settings.Port}")
     headers.put("Accept", "application/json, text/javascript, */*; q=0.01")
-    def paylaod = 'play'
-    def json = JsonOutput.toJson(["${payload}"])
-    message("${json}")
+    def command_in_json = new groovy.json.JsonOutput().toJson(command)
+    message("JSON is ${command_in_json}")
     try {
       def hubAction = new physicalgraph.device.HubAction([
           method: "POST",
@@ -219,8 +218,7 @@ private executeCommand(command){
           headers: headers,
           body: "${command}"
           ],
-          device.deviceNetworkId //,
-          //[callback: "hubActionResponse"]
+          device.deviceNetworkId
       )
       message("${hubAction}")
       hubAction
