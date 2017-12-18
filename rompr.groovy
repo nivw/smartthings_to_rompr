@@ -6,6 +6,9 @@ metadata {
     	capability "Music Player"
 		capability "Switch"
         capability "Refresh"
+        command "preset1"
+        command "preset2"
+        command "preset3"
 	}
 
 	simulator {
@@ -13,50 +16,70 @@ metadata {
 	}
 
 	tiles {
-        standardTile("switch", "device.switch", width: 1, height: 1, canChangeIcon: true) {
-            state "off", label: '${currentValue}', action: "switch.on", icon: "st.switches.switch.off", backgroundColor: "#ffffff"
-            state "on", label: '${currentValue}', action: "switch.off", icon: "st.switches.switch.on", backgroundColor: "#79b821"
-        }
+    	//main
+        standardTile("status", "device.status", width: 1, height: 1, decoration: "flat") {
+      		state "play", label:'Playing', action:"music Player.pause", icon:"st.Electronics.electronics19", nextState:"pause", backgroundColor:"#ffffff"
+      		state "stop", label:'Stopped', action:"music Player.play", icon:"st.Electronics.electronics19", nextState:"play", backgroundColor:"#ffffff"
+      		state "pause", label:'Paused', action:"music Player.play", icon:"st.Electronics.electronics19", nextState:"play", backgroundColor:"#ffffff"
+		}
 		// Row 1
         standardTile("nextTrack", "device.status", width: 1, height: 1, decoration: "flat") {
       		state "next", label:'', action:"music Player.nextTrack", icon:"st.sonos.next-btn", backgroundColor:"#ffffff"
 		}
 		standardTile("playpause", "device.status", width: 1, height: 1, decoration: "flat") {
 			state "default", label:'', action:"music Player.play", icon:"st.sonos.play-btn", nextState:"play", backgroundColor:"#ffffff"
-			state "play", label:'', action:"music Player.pause", icon:"st.sonos.pause-btn", nextState:"pause", backgroundColor:"#ffffff"
+			state "play", label:'', action:"music Player.pause", icon:"st.sonos.pause-btn", nextState:"pause", backgroundColor:"#79b821"
             state "pause", label:'', action:"music Player.play", icon:"st.sonos.play-btn", nextState:"play", backgroundColor:"#ffffff"
 		}
         standardTile("previousTrack", "device.status", width: 1, height: 1, decoration: "flat") {
       		state "previous", label:'', action:"music Player.previousTrack", icon:"st.sonos.previous-btn", backgroundColor:"#ffffff"
 		}
-		// Row 2
-        standardTile("status", "device.status", width: 1, height: 1, decoration: "flat", canChangeIcon: true) {
-      		state "play", label:'Playing', action:"music Player.pause", icon:"st.Electronics.electronics19", nextState:"pause", backgroundColor:"#ffffff"
-      		state "stop", label:'Stopped', action:"music Player.play", icon:"st.Electronics.electronics19", nextState:"play", backgroundColor:"#ffffff"
-      		state "pause", label:'Paused', action:"music Player.play", icon:"st.Electronics.electronics19", nextState:"play", backgroundColor:"#ffffff"
+        standardTile("stop", "device.status", width: 1, height: 1, decoration: "flat") {
+      		state "stop", label:'', action:"music Player.stop", icon:"st.sonos.stop-btn", backgroundColor:"#ffffff"
 		}
-
+		// Row 2
 		standardTile("refresh", "capability.refresh", width: 1, height: 1,  decoration: "flat") {
       		state ("default", label:"Refresh", action:"refresh.refresh", icon:"st.secondary.refresh")
     	}
 		// Row 3
 		standardTile("mute", "device.mute", inactiveLabel: false, decoration: "flat") {
-			state "unmuted", label:"Mute", action:"music Player.mute", icon:"st.custom.sonos.unmuted", backgroundColor:"#ffffff", nextState:"muted"
+			state "unmuted", label:"Mute", action:"music Player.mute", icon:"st.custom.sonos.unmuted", backgroundColor:"#79b821", nextState:"muted"
 			state "muted", label:"Unmute", action:"music Player.unmute", icon:"st.custom.sonos.muted", backgroundColor:"#ffffff", nextState:"unmuted"
 		}
-		controlTile("volume", "device.volume", "slider", width: 3, height: 1) {
+		controlTile("volume", "device.volume", "slider", width: 1, height: 1) {
 			state "volume", label:'${currentValue}', action:"music Player.setLevel", backgroundColor:"#ffffff"
 		}
-		valueTile("file", "device.status", width: 3, height: 1, decoration: "flat") {
-        	state ("name", label:'${currentValue}')
+        //multiAttributeTile(name:"file", type: "generic", width: 1, height: 1, decoration: "flat") {
+		//	tileAttribute ("device.contactDisplay", key: "PRIMARY_CONTROL") {
+        //		attributeState("KCRW", label:'${currentValue}')
+        //        attributeState("99FM", label:'${currentValue}')
+        //	}
+        //}
+        valueTile("file", "device.status", width: 3, height: 1, decoration: "flat") {
+			state "file", label:'${currentValue}'
         }
-        
+        valueTile("error", "device.displayName", width: 1, height: 1, decoration: "flat") {
+			state "default", label:'${currentValue}'
+        }
+        standardTile("preset1", "device.preset1Name", width: 1, height: 1, decoration: "flat") {
+            state "val", label:'1', action:"preset1"
+		}
+        standardTile("preset2", "device.preset1Name", width: 1, height: 1, decoration: "flat") {
+      		state "val", label:'2', action:"preset2"
+		}
+        standardTile("preset3", "device.preset1Name", width: 1, height: 1, decoration: "flat") {
+      		state "val", label:'3', action:"preset3"
+		}
+        standardTile("switch", "device.switch", width: 1, height: 1, canChangeIcon: true) {
+            state "off", label: '${currentValue}', action: "switch.on", icon: "st.switches.switch.off", backgroundColor: "#ffffff"
+            state "on", label: '${currentValue}', action: "switch.off", icon: "st.switches.switch.on", backgroundColor: "#79b821"
+        }        
         main("status")
         details([
         "previousTrack","playpause","nextTrack",
-        "file",
-        "status", "refresh",
-        "mute", "volume"
+        "preset1","preset2","preset3",
+        "stop","refresh", "error",
+        "mute","volume"        
         ])
 	}
 }
@@ -90,13 +113,27 @@ def parse(String description) {
         sendEvent(name: "playpause", value: result.state)
       }
       if (result.containsKey("file")) {
-      	message("setting file to ${result.file}")
-        sendEvent(name: "file", value: result.file)
+      	message("replay said that file is ${result.file}")
+        switch (result.file) {
+        	case ~/.*kcrw.*/: 
+            	message('Playing KCRW now')
+            	sendEvent(name: "file", value: "KCRW")
+                break;
+            case ~/.*99fm.*/ :
+            	message('Playing 99fm now')
+            	sendEvent(name: "file", value: "99FM")
+                break;
+       	}
       }
       if (result.containsKey("playlist")) {
         def json = new groovy.json.JsonBuilder(result.playlist)
-        log.debug "setting playlist to ${json.toString()}"
+        message("setting playlist to ${json.toString()}")
       //  sendEvent(name: "playlist",value: json.toString())
+      }
+      if (result.containsKey("error")) {
+        def json = new groovy.json.JsonBuilder(result.error)
+        message("setting error to ${json.toString()}")
+      	sendEvent(name: "error",value: json.toString())
       }
     }
   }
@@ -119,21 +156,16 @@ def off() {
 
 def play() {
 	message("play")
-    //sendEvent(name: "playpause", value: "play")
-    //sendEvent(name: "switch", value: "on", isStateChange: true)
     executeCommand("[[\"play\"]]")
 }
 
 def pause() {
 	message( "pause" )
-	//sendEvent(name: "playpause", value: "pause")
 	executeCommand("[[\"pause\"]]")
 }
 
 def stop() {
 	message("stop")
-    sendEvent(name: "switch", value: "off", isStateChange: true)
-    sendEvent(name: "status", value: "stop", isStateChange: true)
 	executeCommand("[[\"stop\"]]")
 }
 
@@ -149,7 +181,7 @@ def nextTrack() {
 
 def setLevel(value) {
   message("setLevel to '${value}'")
-  sendEvent(name: "volume", value: value, isStateChange: true)
+  //sendEvent(name: "volume", value: value, isStateChange: true)
   executeCommand("[[\"setvol\",${value}]]")
 }
 
@@ -163,15 +195,23 @@ def unmute() {
   executeCommand("[[\"enableoutput\",0]]")
 }
 
-
-def hubActionResponse(response){
-  message("**** Niv hubActionResponse: '${response}'")
-  message(response)
+def preset1() {
+  message('Play preset 1')
+  executeCommand("[[\"playid\",\"1\"]]")
+}
+def preset2() {
+  message('Play preset 2')
+  executeCommand("[[\"playid\",\"2\"]]")
+}
+def preset3() {
+  message('Play preset 3')
+  executeCommand("[[\"playid\",\"3\"]]")
 }
 
 def poll(){
   refresh()
 }
+
 def createDNI(){
 	if (!settings.IP && !settings.Port) {
     	settings.IP = "192.168.1.12"
