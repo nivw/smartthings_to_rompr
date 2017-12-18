@@ -3,15 +3,25 @@
 ## Synopsis
 High quality audio radio in each room with smart things integration
 
-## Prolog
-I recently renovated my flat, and wanted to hear music in every room using better quality audio.
+## Hardware
 To generate quality audio I decided to use in-wall 8" woofers, and a 35W amplifier.
 I found the [IQaudio](http://iqaudio.co.uk/) project that adds a DAC and amplifier to a raspberrypi.
-This bundle creates good sounding audio, but then comes the control issue.
 The raspberrypi connects to the home network via wireless or Ethernet.
+As this is a raspberrypi running linux this allows many features.
+
+## Features
+1. Pulseaudio, so I can play music from my linux laptop to this raspberrypi over the home network.
+2. UPNP renderer using gmrender-resurrect, so you can play music from your smartphone to the room.
+3. Hear radio using internet streaming using MPD.
+4. Device security.
+
+## Software
+This bundle creates good sounding audio, but then comes the control issue.
 Basically I use MPD to play music on the raspberrypi, so I looked for a web interface to MPD.
 I found [Rompr](https://sourceforge.net/projects/rompr/) does this, so I can open a browser on my smart phone and control the music in each room.
-But I also wanted smartthings, to start/stop music for the rooms I am in.
+
+## Smarthings
+Its great to have smartthings start music when I enter a room, and stops when I leave the room.
 So I wrote this device handler for smartthings.
 
 ## Todo

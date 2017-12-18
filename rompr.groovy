@@ -15,7 +15,7 @@ metadata {
 		// TODO: define status and reply messages here
 	}
 
-	tiles {
+	tiles(scale: 2) {
     	//main
         standardTile("status", "device.status", width: 1, height: 1, decoration: "flat") {
       		state "play", label:'Playing', action:"music Player.pause", icon:"st.Electronics.electronics19", nextState:"pause", backgroundColor:"#ffffff"
@@ -23,30 +23,48 @@ metadata {
       		state "pause", label:'Paused', action:"music Player.play", icon:"st.Electronics.electronics19", nextState:"play", backgroundColor:"#ffffff"
 		}
 		// Row 1
-        standardTile("nextTrack", "device.status", width: 1, height: 1, decoration: "flat") {
+        standardTile("nextTrack", "device.status", width: 1, height: 2, decoration: "flat") {
       		state "next", label:'', action:"music Player.nextTrack", icon:"st.sonos.next-btn", backgroundColor:"#ffffff"
 		}
-		standardTile("playpause", "device.status", width: 1, height: 1, decoration: "flat") {
+		standardTile("playpause", "device.status", width: 2, height: 2, decoration: "flat") {
 			state "default", label:'', action:"music Player.play", icon:"st.sonos.play-btn", nextState:"play", backgroundColor:"#ffffff"
 			state "play", label:'', action:"music Player.pause", icon:"st.sonos.pause-btn", nextState:"pause", backgroundColor:"#79b821"
             state "pause", label:'', action:"music Player.play", icon:"st.sonos.play-btn", nextState:"play", backgroundColor:"#ffffff"
 		}
-        standardTile("previousTrack", "device.status", width: 1, height: 1, decoration: "flat") {
+        standardTile("previousTrack", "device.status", width: 1, height: 2, decoration: "flat") {
       		state "previous", label:'', action:"music Player.previousTrack", icon:"st.sonos.previous-btn", backgroundColor:"#ffffff"
 		}
-        standardTile("stop", "device.status", width: 1, height: 1, decoration: "flat") {
+        standardTile("stop", "device.status", width: 2, height: 2, decoration: "flat") {
       		state "stop", label:'', action:"music Player.stop", icon:"st.sonos.stop-btn", backgroundColor:"#ffffff"
 		}
 		// Row 2
+        standardTile("preset1", "device.preset1Name", width: 1, height: 1, decoration: "flat") {
+            state "kcrw", label:'kcrw', action:"preset1"
+		}
+        standardTile("preset2", "device.preset1Name", width: 1, height: 1, decoration: "flat") {
+      		state "bet", label:'bet', action:"preset2"
+		}
+        standardTile("preset3", "device.preset1Name", width: 1, height: 1, decoration: "flat") {
+      		state "99fm", label:'99fm', action:"preset3"
+		}
+        standardTile("preset4", "device.preset1Name", width: 1, height: 1, decoration: "flat") {
+            state "4", label:'${currentValue}', action:"preset4"
+		}
+        standardTile("preset5", "device.preset1Name", width: 1, height: 1, decoration: "flat") {
+      		state "5", label:'${currentValue}', action:"preset5"
+		}
+        standardTile("preset6", "device.preset1Name", width: 1, height: 1, decoration: "flat") {
+      		state "6", label:'${currentValue}', action:"preset6"
+		}
+		// Row 3
 		standardTile("refresh", "capability.refresh", width: 1, height: 1,  decoration: "flat") {
       		state ("default", label:"Refresh", action:"refresh.refresh", icon:"st.secondary.refresh")
     	}
-		// Row 3
-		standardTile("mute", "device.mute", inactiveLabel: false, decoration: "flat") {
+		standardTile("mute", "device.mute", width: 2, height: 2, inactiveLabel: false, decoration: "flat") {
 			state "unmuted", label:"Mute", action:"music Player.mute", icon:"st.custom.sonos.unmuted", backgroundColor:"#79b821", nextState:"muted"
 			state "muted", label:"Unmute", action:"music Player.unmute", icon:"st.custom.sonos.muted", backgroundColor:"#ffffff", nextState:"unmuted"
 		}
-		controlTile("volume", "device.volume", "slider", width: 1, height: 1) {
+		controlTile("volume", "device.volume", "slider", width: 2, height: 2) {
 			state "volume", label:'${currentValue}', action:"music Player.setLevel", backgroundColor:"#ffffff"
 		}
         //multiAttributeTile(name:"file", type: "generic", width: 1, height: 1, decoration: "flat") {
@@ -55,31 +73,24 @@ metadata {
         //        attributeState("99FM", label:'${currentValue}')
         //	}
         //}
-        valueTile("file", "device.status", width: 3, height: 1, decoration: "flat") {
-			state "file", label:'${currentValue}'
+		valueTile("file", "device.file", width: 6, height: 1, decoration: "flat") {
+			state ("name", label:'${currentValue}')
+		}
+        valueTile("error", "device.error", width: 6, height: 1, decoration: "flat") {
+			state ("default", label:'${currentValue}')
         }
-        valueTile("error", "device.displayName", width: 1, height: 1, decoration: "flat") {
-			state "default", label:'${currentValue}'
-        }
-        standardTile("preset1", "device.preset1Name", width: 1, height: 1, decoration: "flat") {
-            state "val", label:'1', action:"preset1"
-		}
-        standardTile("preset2", "device.preset1Name", width: 1, height: 1, decoration: "flat") {
-      		state "val", label:'2', action:"preset2"
-		}
-        standardTile("preset3", "device.preset1Name", width: 1, height: 1, decoration: "flat") {
-      		state "val", label:'3', action:"preset3"
-		}
+        
         standardTile("switch", "device.switch", width: 1, height: 1, canChangeIcon: true) {
             state "off", label: '${currentValue}', action: "switch.on", icon: "st.switches.switch.off", backgroundColor: "#ffffff"
             state "on", label: '${currentValue}', action: "switch.off", icon: "st.switches.switch.on", backgroundColor: "#79b821"
         }        
         main("status")
         details([
-        "previousTrack","playpause","nextTrack",
-        "preset1","preset2","preset3",
-        "stop","refresh", "error",
-        "mute","volume"        
+        "previousTrack","stop","playpause","nextTrack",
+        "preset1","preset2","preset3",,"preset4",
+        "refresh","mute","volume",
+        "file",
+        "error"
         ])
 	}
 }
@@ -116,13 +127,21 @@ def parse(String description) {
       	message("replay said that file is ${result.file}")
         switch (result.file) {
         	case ~/.*kcrw.*/: 
-            	message('Playing KCRW now')
-            	sendEvent(name: "file", value: "KCRW")
-                break;
+            	message('preset kcrw found')
+            	sendEvent(name: "file", value: "kcrw")
+                break
             case ~/.*99fm.*/ :
-            	message('Playing 99fm now')
-            	sendEvent(name: "file", value: "99FM")
-                break;
+            	message('preset 99fm found')
+            	sendEvent(name: "file", value: "99fm")
+                break
+            case ~/.*bet.*/ :
+            	message('preset bet is playing')
+            	sendEvent(name: "file", value: "bet")
+                break
+            default:
+            	message('No match to preset')
+                sendEvent(name: "file", value: "0")
+            
        	}
       }
       if (result.containsKey("playlist")) {
@@ -209,7 +228,8 @@ def preset3() {
 }
 
 def poll(){
-  refresh()
+	message('Polling')
+	refresh()
 }
 
 def createDNI(){
