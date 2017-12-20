@@ -38,31 +38,31 @@ metadata {
 	    }
             standardTile("previousTrack", "device.status", width: 3, height: 1, decoration: "flat") {
       		state "previous", label:'', action:"music Player.previousTrack", icon:"st.sonos.previous-btn", backgroundColor:"#ffffff"
-	    }
-            standardTile("stop", "device.status", width: 3, height: 2, decoration: "flat") {
-      	        state "stop", label:'', action:"music Player.stop", icon:"st.sonos.stop-btn", nextState:"play", backgroundColor:"#ffffff"
+		}
+	    standardTile("stop", "device.status", width: 3, height: 2, decoration: "flat") {
+	      	state "stop", label:'', action:"music Player.stop", icon:"st.sonos.stop-btn", nextState:"play", backgroundColor:"#ffffff"
 	    }
 	    // Row 2
-            standardTile("preset1", "device.preset1", width: 1, height: 1, decoration: "flat") {
-                state 'preset', label:'${currentValue}', action:"preset1"
-	    }
-            standardTile("preset2", "device.preset2", width: 1, height: 1, decoration: "flat") {
-      		state "preset", label:'${currentValue}', action:"preset2"
-	    }
-            standardTile("preset3", "device.preset3", width: 1, height: 1, decoration: "flat") {
-      		state "preset", label:'${currentValue}', action:"preset3"
-	    }
-            standardTile("preset4", "device.preset4", width: 1, height: 1, decoration: "flat") {
-                state 'preset', label:'${currentValue}', action:"preset4"
-	    }
-            standardTile("preset5", "device.preset5", width: 1, height: 1, decoration: "flat") {
-      		state 'preset', label:'${currentValue}', action:"preset5"
-	    }
-            standardTile("preset6", "device.preset6", width: 1, height: 1, decoration: "flat") {
-      		state 'preset', label:'${currentValue}', action:"preset6"
-	    }
-	    // Row 3
-	    standardTile("refresh", "capability.refresh", width: 2, height: 2,  decoration: "flat") {
+	     standardTile("preset1", "device.preset1", width: 1, height: 1, decoration: "flat") {
+	         state "default", label:'${currentValue}', action:"preset1"
+	     }
+	     standardTile("preset2", "device.preset2", width: 1, height: 1, decoration: "flat") {
+	      		state "default", label:'${currentValue}', action:"preset2"
+	     }
+	     standardTile("preset3", "device.preset3", width: 1, height: 1, decoration: "flat") {
+	      		state "default", label:'${currentValue}', action:"preset3"
+             }
+	     standardTile("preset4", "device.preset4", width: 1, height: 1, decoration: "flat") {
+		    state "default", label:'${currentValue}', action:"preset4"
+	     }
+	     standardTile("preset5", "device.preset5", width: 1, height: 1, decoration: "flat") {
+	      		state "default", label:'${currentValue}', action:"preset5"
+	     }
+	     standardTile("preset6", "device.preset6", width: 1, height: 1, decoration: "flat") {
+	      		state "default", label:'${currentValue}', action:"preset6"
+	     }
+		// Row 3
+		standardTile("refresh", "capability.refresh", width: 2, height: 2,  decoration: "flat") {
       		state ("default", label:"Refresh", action:"refresh.refresh", icon:"st.secondary.refresh")
     	    }
 	    standardTile("mute", "device.mute", width: 2, height: 2, inactiveLabel: false, decoration: "flat") {
@@ -164,7 +164,7 @@ def parse(String description) {
         }
         if (result.containsKey("playlist")) {
             def json = new groovy.json.JsonBuilder(result.playlist)
-            message("setting playlist to ${json.toString()}")
+            //message("setting playlist to ${json.toString()}")
             //returned_events << createEvent(name: "playlist",value: json.toString())
         }
         if (result.containsKey("error")) {
@@ -177,14 +177,19 @@ def parse(String description) {
         }
     }
   }
-  returned_events << createEvent(name: "preset1", value: settings.Preset1)
-  returned_events << createEvent(name: "preset2", value: settings.Preset2)
-  returned_events << createEvent(name: "preset3", value: settings.Preset3)
-  returned_events << createEvent(name: "preset4", value: settings.Preset4)
-  returned_events << createEvent(name: "preset5", value: settings.Preset5)
-  returned_events << createEvent(name: "preset6", value: settings.Preset6)
   message(returned_events)
+  message('Events to UI are above:')
   return returned_events
+}
+def updated() {
+  message('updated unvoked')
+  sendEvent(name: "preset1", value: settings.Preset1, displayed: false)
+  sendEvent(name: "preset2", value: settings.Preset2, displayed: false)
+  sendEvent(name: "preset3", value: settings.Preset3, displayed: false)
+  sendEvent(name: "preset4", value: settings.Preset4, displayed: false)
+  sendEvent(name: "preset5", value: settings.Preset5, displayed: false)
+  sendEvent(name: "preset6", value: settings.Preset6, displayed: false)
+
 }
 
 def refresh(){
@@ -223,8 +228,8 @@ def previousTrack() {
 }
 
 def nextTrack() {
-	message('nextTrack')
-	executeCommand("[[\"play\",\"1\"]]")
+    message('nextTrack')
+    executeCommand("[[\"play\",\"1\"]]")
 }
 
 def setLevel(value) {
@@ -254,7 +259,18 @@ def preset3() {
     message('Play preset 3')
     executeCommand("[[\"playid\",\"3\"]]")
 }
-
+def preset4() {
+    message('Play preset 4')
+    executeCommand("[[\"playid\",\"4\"]]")
+}
+def preset5() {
+    message('Play preset 5')
+    executeCommand("[[\"playid\",\"5\"]]")
+}
+def preset6() {
+    message('Play preset 6')
+    executeCommand("[[\"playid\",\"6\"]]")
+}
 def poll(){
     message('Polling')
     refresh()
