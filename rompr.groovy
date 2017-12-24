@@ -22,7 +22,7 @@ metadata {
 	tiles(scale: 2) {
     	    //main
 	    standardTile("status", "device.status", width: 1, height: 1, decoration: "flat") {
-      	        state "play", label:'Playing', action:"music Player.pause", icon:"st.Electronics.electronics19", nextState:"pause", backgroundColor:"#ffffff"
+      	        state "play", label:'Playing', action:"music Player.pause", icon:"st.Electronics.electronics19", nextState:"pause", backgroundColor: "#00a0dc"
       		state "stop", label:'Stopped', action:"music Player.play", icon:"st.Electronics.electronics19", nextState:"play", backgroundColor:"#ffffff"
       		state "pause", label:'Paused', action:"music Player.play", icon:"st.Electronics.electronics19", nextState:"play", backgroundColor:"#ffffff"
 	    }
@@ -32,7 +32,7 @@ metadata {
 	    }
 	    standardTile("playpause", "device.status", width: 3, height: 2, decoration: "flat") {
 	        state "default", label:'', action:"music Player.play", icon:"st.sonos.play-btn", nextState:"play", backgroundColor:"#ffffff"
-		state "play", label:'', action:"music Player.pause", icon:"st.sonos.pause-btn", nextState:"pause", backgroundColor:"#79b821"
+		state "play", label:'', action:"music Player.pause", icon:"st.sonos.pause-btn", nextState:"pause"
             	state "pause", label:'', action:"music Player.play", icon:"st.sonos.play-btn", nextState:"play", backgroundColor:"#ffffff"
             	state "stop", label:'', action:"music Player.play", icon:"st.sonos.play-btn", nextState:"play", backgroundColor:"#ffffff"
 	    }
@@ -127,8 +127,16 @@ def parse(String description) {
             if (result.containsKey("state")) {
                 message("setting state to ${result.state}")
                 returned_events << createEvent(name: "status", value: result.state)
+                message("setting playpause to ${result.state}")
                 returned_events << createEvent(name: "playpause", value: result.state)
-            }
+                if (result.state == 'play') {
+                    message("setting switch to on")
+                    returned_events << createEvent(name: "switch", value: 'on')
+                } else {
+                    message("setting switch to off")
+                    returned_events << createEvent(name: "switch", value: 'off')
+                }
+	    }
             if (result.containsKey("file")) {
       	        message("replay said that file is ${result.file}")
                 switch (result.file) {
